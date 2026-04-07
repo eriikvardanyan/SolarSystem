@@ -1,58 +1,635 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="hy">
 <head>
     <meta charset="UTF-8">
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="icon" href="img/icon.png">
-    <title>Solar System</title>  <!-- Արեգակնային համակարգ -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Արեգակնային Համակարգ</title>
+    <link rel="icon" href="solnce.png" type="image/png">
+    <style>
+        /* =========================================
+           БАЗОВЫЕ НАСТРОЙКИ И ФОН
+        ========================================= */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: #000; 
+            color: #ffffff;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+        }
+
+        #stars-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .star {
+            position: absolute;
+            background-color: #ffffff;
+            border-radius: 50%;
+            animation: twinkle infinite alternate;
+        }
+
+        @keyframes twinkle {
+            0% { opacity: 0.2; transform: scale(0.8); }
+            100% { opacity: 1; transform: scale(1.2); }
+        }
+
+        /* КОМЕТЫ */
+        .comet {
+            position: fixed;
+            background: linear-gradient(to right, rgba(255,255,255,0), rgba(255,255,255,1));
+            height: 2px;
+            width: 80px;
+            z-index: -1;
+            pointer-events: none;
+            transform-origin: center right;
+        }
+
+        /* =========================================
+           СТИЛЬ iOS 26 (ИНФО-ПАНЕЛЬ И ИНТРО)
+        ========================================= */
+        .ios-panel {
+            background: rgba(10, 10, 10, 0.7);
+            border: 0.5px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border-radius: 24px;
+        }
+
+        #info-panel {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 380px;
+            max-height: 90vh;
+            padding: 25px;
+            z-index: 1000;
+            opacity: 0;
+            transform: scale(0.9) translateY(-20px);
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            pointer-events: none;
+            overflow-y: auto;
+        }
+
+        #info-panel.active {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+            pointer-events: auto;
+        }
+
+        #info-title {
+            font-size: 26px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #987d48;
+            border-bottom: 1px solid rgba(152, 125, 72, 0.3);
+            padding-bottom: 10px;
+        }
+
+        .info-stat {
+            font-size: 13px;
+            margin-bottom: 12px;
+            display: flex;
+            flex-direction: column;
+            border-bottom: 0.5px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 8px;
+        }
+
+        .stat-label { color: rgba(255, 255, 255, 0.5); margin-bottom: 2px; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; }
+        .stat-value { color: #fff; font-weight: 500; font-size: 14px; }
+
+        /* =========================================
+           СЕКЦИИ И ОБЪЕКТЫ
+        ========================================= */
+        .section {
+            min-height: 250vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .intro-text {
+            text-align: center;
+            max-width: 650px;
+            padding: 50px;
+        }
+
+        .intro-text h1 {
+            color: #987d48;
+            font-size: 42px;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+
+        .intro-footer {
+            margin-top: 30px;
+            font-size: 14px;
+            color: rgba(255,255,255,0.4);
+        }
+
+        /* Орбиты и Пояса */
+        .orbit-line, .belt-container {
+            position: absolute;
+            border-radius: 50%;
+            bottom: 50%;
+            left: 50%;
+            transform: translateX(-50%);
+            pointer-events: none;
+            z-index: 0;
+            clip-path: inset(50% 0 0 0); 
+        }
+
+        .orbit-line {
+            width: 150vw;
+            height: 150vw;
+            border: 1px dashed rgba(255, 255, 255, 0.15);
+        }
+
+        .belt-container {
+            width: 160vw;
+            height: 160vw;
+        }
+
+        .belt-rock {
+            position: absolute;
+            background: rgba(255,255,255,0.4);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        /* ПЛАНЕТЫ */
+        .planet-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 5;
+        }
+
+        .planet {
+            border-radius: 50%;
+            position: relative;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            transition: transform 0.3s ease;
+        }
+        
+        .planet:hover { transform: scale(1.05); }
+
+        .sun { width: 300px; height: 300px; background-image: url('/img/sun1.png'); }
+        .mercury { width: 45px; height: 45px; background-image: url('/img/mercury1.png'); }
+        .venus { width: 75px; height: 75px; background-image: url('/img/venus1.png'); }
+        .earth { width: 90px; height: 90px; background-image: url('/img/earth1.png'); }
+        .mars { width: 60px; height: 60px; background-image: url('/img/mars1.png'); }
+        .jupiter { width: 200px; height: 200px; background-image: url('/img/jupiter1.png'); }
+        .saturn { width: 240px; height: 160px; background-image: url('/img/saturn1.png'); border-radius: 0; }
+        .uranus { width: 120px; height: 500px; background-image: url('/img/uranus1.png'); }
+        .neptune { width: 105px; height: 105px; background-image: url('/img/neptune1.png'); }
+
+        /* СИСТЕМА ЛУНЫ */
+        .moon-system {
+            position: absolute;
+            width: 180px; 
+            height: 180px;
+            border: 1px dashed rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            animation: rotateMoon 20s linear infinite;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        @keyframes rotateMoon {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .moon {
+            width: 20px;
+            height: 20px;
+            background-image: url('/img/moon1.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            right: -10px; 
+            transform: translateY(-50%);
+            cursor: pointer;
+            pointer-events: auto;
+            z-index: 20;
+            box-shadow: 0 0 10px rgba(255,255,255,0.2);
+        }
+
+        /* ВЫНОСКИ */
+        .callout {
+            position: absolute;
+            right: 50%; /* Центр планеты */
+            bottom: 50%; /* Центр планеты */
+            pointer-events: none;
+            z-index: 6;
+        }
+
+        .line-diag {
+            position: absolute;
+            width: 100px;
+            height: 1px; /* Очень-очень тонкая линия */
+            background-color: rgba(255, 255, 255, 0.7);
+            right: 0;
+            bottom: 0;
+            transform: rotate(45deg); /* Теперь идет ВВЕРХ-ВЛЕВО */
+            transform-origin: right center;
+        }
+
+        .line-horiz {
+            position: absolute;
+            width: 150px;
+            height: 1px; /* Очень-очень тонкая линия */
+            background-color: rgba(255, 255, 255, 0.7);
+            right: 70px; /* Сдвиг для стыковки с диагональю (cos(45) * 100) */
+            bottom: 70px; /* Сдвиг ВВЕРХ для стыковки (sin(45) * 100) */
+        }
+
+        .label-box {
+            position: absolute;
+            right: 70px;
+            bottom: 75px; /* Чуть выше горизонтальной линии */
+            text-align: right;
+            width: 200px; /* Чтобы текст не переносился криво */
+        }
+
+        .label {
+            font-size: 26px;
+            white-space: nowrap;
+            color: #ffffff;
+            font-weight: 300;
+        }
+
+        .sub-label {
+            font-size: 14px;
+            color: #888;
+            white-space: nowrap;
+        }
+
+        /* FOOTER */
+        footer {
+            padding: 60px 0;
+            text-align: center;
+            border-top: 0.5px solid rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 14px;
+        }
+
+        .credits a {
+            color: #fff;
+            text-decoration: underline;
+            transition: color 0.3s;
+        }
+
+        .credits a:hover {
+            color: #987d48;
+        }
+
+        @media (max-width: 750px) {
+            #info-panel { width: 90%; right: 5%; left: 5%; top: auto; bottom: 20px; }
+            .orbit-line { width: 220vw; height: 220vw; }
+        }
+    </style>
 </head>
 <body>
 
-    <div class="sun"> </div> <!-- Արեգակ -->
-    <div class="mercury-outline"> <!-- Մերկուրի-Mercury -->
-        <div class="mercury">
-            <p>Mercury</p>
-        </div>
-    </div>
-    <div class="venus-outline"> <!-- Վեներա-Venus -->
-        <div class="venus">
-            <p>Venus</p>
-        </div>
-    </div>
-    <div class="earth-outline"> <!-- Երկիր-Earth -->
-        <div class="earth">      
-            <div class="moon-outline"> <!-- Լուսին-Moon -->
-                <div class="moon"> </div>
-                <!-- <p>Moon</p> -->
-            </div>
-            <p>Earth</p>
-        </div>
-    </div>
-    <div class="mars-outline"> <!-- Մարս-Mars -->
-        <div class="mars">
-            <p>Mars</p>
-        </div>
-    </div>
-    <div class="jupiter-outline"> <!-- Յուպիտեր-Jupiter -->
-        <div class="jupiter">
-            <p>Jupiter</p>
-        </div>
-    </div>
-    <div class="saturn-outline"> <!-- Սատուրն-Saturn -->
-        <div class="saturn">
-            <p>Saturn</p>
-        </div>
-    </div>
-    <div class="uranus-outline"> <!-- Ուրան-Uranus -->
-        <div class="uranus">
-            <p>Uranus</p>
-        </div>
-    </div>
-    <div class="neptune-outline"> <!-- Նեպտուն-Neptune -->
-        <div class="neptune">
-            <p>Neptune</p>
-        </div>
+    <div id="stars-container"></div>
+
+    <div id="info-panel" class="ios-panel">
+        <div id="info-title">Անվանում</div>
+        <div id="info-content"></div>
     </div>
 
+    <section class="section" style="min-height: 600px;">
+        <div class="intro-text ios-panel">
+            <h1>Արեգակնային Համակարգ</h1>
+            <p style="color: rgba(255,255,255,0.6); line-height: 1.6;">Բացահայտեք տիեզերքի հրաշքները մեր ինտերակտիվ քարտեզի միջոցով: Սահեք ներքև՝ ճամփորդությունը սկսելու համար:</p>
+            <div class="intro-footer credits">
+                © Website by <a href="https://eriikvardanyan.github.io/myportfolio/" target="_blank">Erik Vardanyan</a>, 2022.
+            </div>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="planet-container" onclick="showInfo('sun')">
+            <div class="planet sun"></div>
+            <div class="callout">
+                <div class="label-box">
+                    <div class="label">Արեգակ</div>
+                    <div class="sub-label">Կենտրոնական աստղ</div>
+                </div>
+                <div class="line-horiz"></div><div class="line-diag"></div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="orbit-line"></div>
+        <div class="planet-container" onclick="showInfo('mercury')">
+            <div class="planet mercury"></div>
+            <div class="callout">
+                <div class="label-box"><div class="label">Մերկուրի</div><div class="sub-label">1-ին մոլորակ</div></div>
+                <div class="line-horiz"></div><div class="line-diag"></div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="orbit-line"></div>
+        <div class="planet-container" onclick="showInfo('venus')">
+            <div class="planet venus"></div>
+            <div class="callout">
+                <div class="label-box"><div class="label">Վեներա</div><div class="sub-label">2-րդ մոլորակ</div></div>
+                <div class="line-horiz"></div><div class="line-diag"></div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="orbit-line"></div>
+        <div class="planet-container">
+            <div class="planet earth" onclick="showInfo('earth')"></div>
+            <div class="moon-system">
+                <div class="moon" onclick="event.stopPropagation(); showInfo('moon')"></div>
+            </div>
+            <div class="callout">
+                <div class="label-box"><div class="label">Երկիր</div><div class="sub-label">3-րդ մոլորակ</div></div>
+                <div class="line-horiz"></div><div class="line-diag"></div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="orbit-line"></div>
+        <div class="planet-container" onclick="showInfo('mars')">
+            <div class="planet mars"></div>
+            <div class="callout">
+                <div class="label-box"><div class="label">Մարս</div><div class="sub-label">4-րդ մոլորակ</div></div>
+                <div class="line-horiz"></div><div class="line-diag"></div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="belt-container" id="asteroid-belt"></div>
+        <div style="z-index: 10; color: rgba(255,255,255,0.2); letter-spacing: 10px; font-weight: 100;">ԱՍՏԵՐՈԻԴՆԵՐԻ ԳՈՏԻ</div>
+    </section>
+
+    <section class="section">
+        <div class="orbit-line"></div>
+        <div class="planet-container" onclick="showInfo('jupiter')">
+            <div class="planet jupiter"></div>
+            <div class="callout">
+                <div class="label-box"><div class="label">Յուպիտեր</div><div class="sub-label">5-րդ մոլորակ</div></div>
+                <div class="line-horiz"></div><div class="line-diag"></div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="orbit-line"></div>
+        <div class="planet-container" onclick="showInfo('saturn')">
+            <div class="planet saturn"></div>
+            <div class="callout">
+                <div class="label-box"><div class="label">Սատուրն</div><div class="sub-label">6-րդ մոլորակ</div></div>
+                <div class="line-horiz"></div><div class="line-diag"></div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="orbit-line"></div>
+        <div class="planet-container" onclick="showInfo('uranus')">
+            <div class="planet uranus"></div>
+            <div class="callout">
+                <div class="label-box"><div class="label">Ուրան</div><div class="sub-label">7-րդ մոլորակ</div></div>
+                <div class="line-horiz"></div><div class="line-diag"></div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="orbit-line"></div>
+        <div class="planet-container" onclick="showInfo('neptune')">
+            <div class="planet neptune"></div>
+            <div class="callout">
+                <div class="label-box"><div class="label">Նեպտուն</div><div class="sub-label">8-րդ մոլորակ</div></div>
+                <div class="line-horiz"></div><div class="line-diag"></div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="belt-container" id="kuiper-belt" style="width: 180vw; height: 180vw;"></div>
+        <div style="z-index: 10; color: rgba(255,255,255,0.2); letter-spacing: 10px; font-weight: 100;">ԿՈՅՊԵՐԻ ԳՈՏԻ</div>
+    </section>
+
+    <footer>
+        <div class="credits">
+            © Website by <a href="https://eriikvardanyan.github.io/myportfolio/" target="_blank">Erik Vardanyan</a>, 2022.
+        </div>
+    </footer>
+
+    <script>
+        // ГЕНЕРАЦИЯ ЗВЕЗД
+        const starsContainer = document.getElementById('stars-container');
+        for (let i = 0; i < 250; i++) {
+            const star = document.createElement('div');
+            star.className = 'star';
+            const size = Math.random() * 2;
+            star.style.width = size + 'px';
+            star.style.height = size + 'px';
+            star.style.top = Math.random() * 100 + 'vh';
+            star.style.left = Math.random() * 100 + 'vw';
+            star.style.animationDuration = (Math.random() * 3 + 2) + 's';
+            starsContainer.appendChild(star);
+        }
+
+        // ГЕНЕРАЦИЯ ПОЯСОВ (КАМНИ)
+        function generateBelt(id, count) {
+            const belt = document.getElementById(id);
+            const width = belt.offsetWidth;
+            for (let i = 0; i < count; i++) {
+                const rock = document.createElement('div');
+                rock.className = 'belt-rock';
+                const angle = Math.random() * Math.PI * 2;
+                const radius = (width / 2) + (Math.random() * 40 - 20);
+                const x = Math.cos(angle) * radius + (width / 2);
+                const y = Math.sin(angle) * radius + (width / 2);
+                const size = Math.random() * 3;
+                rock.style.width = size + 'px';
+                rock.style.height = size + 'px';
+                rock.style.left = x + 'px';
+                rock.style.top = y + 'px';
+                rock.style.opacity = Math.random() * 0.5 + 0.2;
+                belt.appendChild(rock);
+            }
+        }
+        generateBelt('asteroid-belt', 300);
+        generateBelt('kuiper-belt', 400);
+
+        // КОМЕТЫ (ЛЕТАЮЩИЕ)
+        function createComet() {
+            const comet = document.createElement('div');
+            comet.className = 'comet';
+            
+            // Выбираем случайный край: 0-верх, 1-право, 2-низ, 3-лево
+            const edge = Math.floor(Math.random() * 4);
+            let startX, startY, endX, endY;
+
+            if (edge === 0) {
+                startX = Math.random() * 100; startY = -10;
+                endX = Math.random() * 100; endY = 110;
+            } else if (edge === 1) {
+                startX = 110; startY = Math.random() * 100;
+                endX = -10; endY = Math.random() * 100;
+            } else if (edge === 2) {
+                startX = Math.random() * 100; startY = 110;
+                endX = Math.random() * 100; endY = -10;
+            } else {
+                startX = -10; startY = Math.random() * 100;
+                endX = 110; endY = Math.random() * 100;
+            }
+
+            // Вычисляем угол, чтобы яркая часть (справа) смотрела по курсу
+            const dx = endX - startX;
+            const dy = endY - startY;
+            const angle = Math.atan2(dy, dx) * (180 / Math.PI);
+
+            comet.style.top = startY + 'vh';
+            comet.style.left = startX + 'vw';
+            comet.style.transform = `rotate(${angle}deg)`;
+            
+            document.body.appendChild(comet);
+
+            const duration = 1500 + Math.random() * 1000;
+
+            comet.animate([
+                { left: startX + 'vw', top: startY + 'vh', opacity: 1 },
+                { left: endX + 'vw', top: endY + 'vh', opacity: 0 }
+            ], { duration: duration, easing: 'linear' });
+
+            setTimeout(() => comet.remove(), duration + 100);
+        }
+
+        setInterval(() => {
+            createComet();
+            if(Math.random() > 0.5) setTimeout(createComet, 500); // Иногда 2 кометы
+        }, 12000);
+
+        // ОБНОВЛЕННЫЕ ДАННЫЕ (ВСЕ ПАРАМЕТРЫ)
+        const planetData = {
+            sun: { 
+                t: "Արեգակ", r: "1,392,700 կմ", v: "7,189 կմ/ժ", 
+                ds: "0 կմ", dz: "149.6 մլն կմ", g: "274 մ/վ²", sp: "8 մոլորակ",
+                v_axis: "7,189 կմ/ժ (25-35 երկրային օր)",
+                v_sun: "220 կմ/վ (Գալակտիկայի շուրջ)"
+            },
+            mercury: { 
+                t: "Մերկուրի", r: "4,879 կմ", v: "47.36 կմ/վ", 
+                ds: "57.9 մլն կմ", dz: "91.7 մլն կմ", g: "3.7 մ/վ²", sp: "0",
+                v_axis: "10.83 կմ/ժ (58.6 երկրային օր)",
+                v_sun: "170,500 կմ/ժ (88 երկրային օր)"
+            },
+            venus: { 
+                t: "Վեներա", r: "12,104 կմ", v: "35.02 կմ/վ", 
+                ds: "108.2 մլն կմ", dz: "41.4 մլն կմ", g: "8.87 մ/վ²", sp: "0",
+                v_axis: "6.52 կմ/ժ (243 երկրային օր)",
+                v_sun: "126,070 կմ/ժ (224.7 երկրային օր)"
+            },
+            earth: { 
+                t: "Երկիր", r: "12,742 կմ", v: "29.78 կմ/վ", 
+                ds: "149.6 մլն կմ", dz: "0 կմ", g: "9.8 մ/վ²", sp: "1",
+                v_axis: "1,674 կմ/ժ (23ժ 56ր)",
+                v_sun: "107,200 կմ/ժ (365.25 օր)"
+            },
+            moon: { 
+                t: "Լուսին", r: "3,474 կմ", v: "1.02 կմ/վ", 
+                ds: "149.6 մլն կմ", dz: "384,400 կմ", g: "1.62 մ/վ²", sp: "0",
+                v_axis: "16.7 կմ/ժ (27.3 երկրային օր)",
+                v_sun: "3,679 կմ/ժ (27.3 օր Երկրի շուրջ)"
+            },
+            mars: { 
+                t: "Մարս", r: "6,779 կմ", v: "24.07 կմ/վ", 
+                ds: "227.9 մլն կմ", dz: "78.3 մլն կմ", g: "3.71 մ/վ²", sp: "2",
+                v_axis: "868 կմ/ժ (24ժ 37ր)",
+                v_sun: "86,670 կմ/ժ (687 երկրային օր)"
+            },
+            jupiter: { 
+                t: "Յուպիտեր", r: "139,820 կմ", v: "13.07 կմ/վ", 
+                ds: "778.5 մլն կմ", dz: "628.7 մլն կմ", g: "24.79 մ/վ²", sp: "95",
+                v_axis: "45,300 կմ/ժ (9ժ 55ր)",
+                v_sun: "47,000 կմ/ժ (11.8 երկրային տարի)"
+            },
+            saturn: { 
+                t: "Սատուրն", r: "116,460 կմ", v: "9.68 կմ/վ", 
+                ds: "1.4 մլրդ կմ", dz: "1.2 մլրդ կմ", g: "10.44 մ/վ²", sp: "146",
+                v_axis: "35,500 կմ/ժ (10ժ 33ր)",
+                v_sun: "34,800 կմ/ժ (29.4 երկրային տարի)"
+            },
+            uranus: { 
+                t: "Ուրան", r: "50,724 կմ", v: "6.80 կմ/վ", 
+                ds: "2.8 մլրդ կմ", dz: "2.6 մլրդ կմ", g: "8.69 մ/վ²", sp: "27",
+                v_axis: "9,660 կմ/ժ (17ժ 14ր)",
+                v_sun: "24,500 կմ/ժ (84 երկրային տարի)"
+            },
+            neptune: { 
+                t: "Նեպտուն", r: "49,244 կմ", v: "5.43 կմ/վ", 
+                ds: "4.5 մլրդ կմ", dz: "4.3 մլրդ կմ", g: "11.15 մ/վ²", sp: "14",
+                v_axis: "9,650 կմ/ժ (16ժ 6ր)",
+                v_sun: "19,500 կմ/ժ (164.8 երկրային տարի)"
+            }
+        };
+
+        function showInfo(id) {
+            const d = planetData[id];
+            document.getElementById('info-title').textContent = d.t;
+            document.getElementById('info-content').innerHTML = `
+                <div class="info-stat"><span class="stat-label">Չափս (Տրամագիծ)</span><span class="stat-value">${d.r}</span></div>
+                <div class="info-stat"><span class="stat-label">Պտտման արագություն</span><span class="stat-value">${d.v}</span></div>
+                <div class="info-stat"><span class="stat-label">Հեռավորություն Արեգակից</span><span class="stat-value">${d.ds}</span></div>
+                <div class="info-stat"><span class="stat-label">Հեռավորություն Երկրից</span><span class="stat-value">${d.dz}</span></div>
+                <div class="info-stat"><span class="stat-label">Ձգողականության ուժ</span><span class="stat-value">${d.g}</span></div>
+                <div class="info-stat"><span class="stat-label">Արբանյակների քանակ</span><span class="stat-value">${d.sp}</span></div>
+                <div class="info-stat"><span class="stat-label">Առանցքային պտույտ (արագություն և տևողություն)</span><span class="stat-value">${d.v_axis}</span></div>
+                <div class="info-stat"><span class="stat-label">Ուղեծրային պտույտ (արագություն և տևողություն)</span><span class="stat-value">${d.v_sun}</span></div>
+            `;
+            document.getElementById('info-panel').classList.add('active');
+        }
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    document.getElementById('info-panel').classList.remove('active');
+                }
+            });
+        }, { threshold: 0.1 });
+        document.querySelectorAll('.section').forEach(s => observer.observe(s));
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.planet-container') && !e.target.closest('#info-panel') && !e.target.closest('.moon')) {
+                document.getElementById('info-panel').classList.remove('active');
+            }
+        });
+    </script>
 </body>
 </html>
