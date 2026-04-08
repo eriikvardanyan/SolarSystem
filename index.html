@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Արեգակնային Համակարգ</title>
-    <link rel="icon" href="solnce.png" type="image/png">
+    <link rel="icon" href="/img/icon.png" type="image/png">
     <style>
         /* =========================================
            БАЗОВЫЕ НАСТРОЙКИ И ФОН
@@ -57,7 +57,7 @@
         }
 
         /* =========================================
-           СТИЛЬ iOS 26 (ИНФО-ПАНЕЛЬ И ИНТРО)
+           СТИЛЬ iOS 26 (ИНФО-ПАНЕЛЬ И ИНТРО И МУЗЫКА)
         ========================================= */
         .ios-panel {
             background: rgba(10, 10, 10, 0.7);
@@ -109,6 +109,30 @@
         .stat-label { color: rgba(255, 255, 255, 0.5); margin-bottom: 2px; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; }
         .stat-value { color: #fff; font-weight: 500; font-size: 14px; }
 
+        /* КНОПКА МУЗЫКИ */
+        #music-toggle {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 2000;
+            user-select: none;
+            overflow: hidden; /* Chtoby kartinka ne vykhodila za krug */
+        }
+
+        #music-icon-img {
+            width: 60%;
+            height: 60%;
+            object-fit: contain;
+            pointer-events: none;
+        }
+
         /* =========================================
            СЕКЦИИ И ОБЪЕКТЫ
         ========================================= */
@@ -139,8 +163,57 @@
             color: rgba(255,255,255,0.4);
         }
 
-        /* Орбиты и Пояса */
-        .orbit-line, .belt-container {
+        /* АНИМАЦИЯ СКРОЛЛА */
+        .scroll-indicator {
+            margin: 40px auto 20px auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .mouse {
+            width: 26px;
+            height: 42px;
+            border: 2px solid rgba(255,255,255,0.6);
+            border-radius: 13px;
+            position: relative;
+        }
+        
+        .wheel {
+            width: 4px;
+            height: 8px;
+            background: #987d48;
+            border-radius: 2px;
+            position: absolute;
+            top: 6px;
+            left: 50%;
+            transform: translateX(-50%);
+            animation: scrollWheel 1.5s infinite;
+        }
+        
+        .arrow-down {
+            margin-top: 10px;
+            width: 10px;
+            height: 10px;
+            border-right: 2px solid rgba(255,255,255,0.6);
+            border-bottom: 2px solid rgba(255,255,255,0.6);
+            transform: rotate(45deg);
+            animation: arrowBlink 1.5s infinite;
+        }
+        
+        @keyframes scrollWheel {
+            0% { top: 6px; opacity: 1; }
+            100% { top: 22px; opacity: 0; }
+        }
+        
+        @keyframes arrowBlink {
+            0% { opacity: 0; }
+            50% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+        /* Орбиты и Пояса - Обёртки для статичной обрезки */
+        .orbit-wrapper, .belt-wrapper {
             position: absolute;
             border-radius: 50%;
             bottom: 50%;
@@ -148,23 +221,46 @@
             transform: translateX(-50%);
             pointer-events: none;
             z-index: 0;
-            clip-path: inset(50% 0 0 0); 
+            clip-path: inset(50% 0 0 0); /* Маска стоит на месте */
         }
 
-        .orbit-line {
+        .orbit-wrapper {
             width: 150vw;
             height: 150vw;
-            border: 1px dashed rgba(255, 255, 255, 0.15);
         }
 
-        .belt-container {
+        .belt-wrapper {
             width: 160vw;
             height: 160vw;
         }
 
+        /* Внутренние элементы, которые крутятся */
+        @keyframes rotateInner {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .orbit-line, .belt-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+        }
+
+        .orbit-line {
+            border: 1px dashed rgba(255, 255, 255, 0.15);
+            animation: rotateInner 150s linear infinite;
+        }
+
+        .belt-container {
+            animation: rotateInner 250s linear infinite;
+        }
+
         .belt-rock {
             position: absolute;
-            background: rgba(255,255,255,0.4);
+            background: rgba(255, 255, 255, 0.74);
             border-radius: 50%;
             pointer-events: none;
         }
@@ -188,7 +284,7 @@
             transition: transform 0.3s ease;
         }
         
-        .planet:hover { transform: scale(1.05); }
+        /* .planet:hover { transform: scale(1.05); } */
 
         .sun { width: 300px; height: 300px; background-image: url('/img/sun1.png'); }
         .mercury { width: 45px; height: 45px; background-image: url('/img/mercury1.png'); }
@@ -290,6 +386,7 @@
             padding: 60px 0;
             text-align: center;
             border-top: 0.5px solid rgba(255, 255, 255, 0.1);
+            background: rgba(10, 10, 10, 0.7);
             color: rgba(255, 255, 255, 0.5);
             font-size: 14px;
         }
@@ -304,13 +401,56 @@
             color: #987d48;
         }
 
+        /* =========================================
+           МОБИЛЬНАЯ АДАПТАЦИЯ
+        ========================================= */
         @media (max-width: 750px) {
-            #info-panel { width: 90%; right: 5%; left: 5%; top: auto; bottom: 20px; }
-            .orbit-line { width: 220vw; height: 220vw; }
+            #info-panel { 
+                width: 100%; 
+                right: 0; 
+                left: 0; 
+                top: auto; 
+                bottom: 0; 
+                max-height: 85vh; /* Оставляет 15vh сверху для закрытия нажатием */
+                border-radius: 24px 24px 0 0;
+                border: none;
+                border-top: 0.5px solid rgba(255, 255, 255, 0.2);
+                transform: translateY(100%);
+                opacity: 1; /* Непрозрачность всегда 1, чтобы анимация выезда была плавной */
+                transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            }
+            
+            #info-panel.active {
+                transform: translateY(0);
+                pointer-events: auto;
+            }
+
+            .orbit-wrapper { width: 250vw; height: 250vw; }
+            
+            #music-toggle {
+                top: 15px;
+                left: 15px;
+                width: 45px;
+                height: 45px;
+            }
+
+            /* Легкое уменьшение планет для мобилок, чтобы все смотрелось адекватно */
+            .sun { width: 200px; height: 200px; }
+            .jupiter { width: 140px; height: 140px; }
+            .saturn { width: 170px; height: 110px; }
         }
     </style>
 </head>
 <body>
+
+    <audio id="bg-music" loop preload="auto">
+        <source src="/img/2 Minute Timer - Calm Ambient Music - Underwater Melon (128k).mp3" type="audio/mpeg">
+    </audio>
+    <script>document.getElementById('bg-music').volume = 0.05;</script>
+
+    <div id="music-toggle" class="ios-panel" onclick="toggleMusic()">
+        <img id="music-icon-img" src="/img/volume_4186904-removebg-preview.png" alt="Music Toggle">
+    </div>
 
     <div id="stars-container"></div>
 
@@ -322,7 +462,15 @@
     <section class="section" style="min-height: 600px;">
         <div class="intro-text ios-panel">
             <h1>Արեգակնային Համակարգ</h1>
-            <p style="color: rgba(255,255,255,0.6); line-height: 1.6;">Բացահայտեք տիեզերքի հրաշքները մեր ինտերակտիվ քարտեզի միջոցով: Սահեք ներքև՝ ճամփորդությունը սկսելու համար:</p>
+            <p style="color: rgba(255,255,255,0.6); line-height: 1.6;">Բացահայտեք տիեզերքի հրաշքները մեր ինտերակտիվ քարտեզի միջոցով: Սահեք ներքև՝ ճամփորդությունը սկսելու համար: </p>
+            
+            <div class="scroll-indicator">
+                <div class="mouse">
+                    <div class="wheel"></div>
+                </div>
+                <div class="arrow-down"></div>
+            </div>
+
             <div class="intro-footer credits">
                 © Website by <a href="https://eriikvardanyan.github.io/myportfolio/" target="_blank">Erik Vardanyan</a>, 2022.
             </div>
@@ -343,7 +491,7 @@
     </section>
 
     <section class="section">
-        <div class="orbit-line"></div>
+        <div class="orbit-wrapper"><div class="orbit-line"></div></div>
         <div class="planet-container" onclick="showInfo('mercury')">
             <div class="planet mercury"></div>
             <div class="callout">
@@ -354,7 +502,7 @@
     </section>
 
     <section class="section">
-        <div class="orbit-line"></div>
+        <div class="orbit-wrapper"><div class="orbit-line"></div></div>
         <div class="planet-container" onclick="showInfo('venus')">
             <div class="planet venus"></div>
             <div class="callout">
@@ -365,7 +513,7 @@
     </section>
 
     <section class="section">
-        <div class="orbit-line"></div>
+        <div class="orbit-wrapper"><div class="orbit-line"></div></div>
         <div class="planet-container">
             <div class="planet earth" onclick="showInfo('earth')"></div>
             <div class="moon-system">
@@ -379,7 +527,7 @@
     </section>
 
     <section class="section">
-        <div class="orbit-line"></div>
+        <div class="orbit-wrapper"><div class="orbit-line"></div></div>
         <div class="planet-container" onclick="showInfo('mars')">
             <div class="planet mars"></div>
             <div class="callout">
@@ -390,12 +538,12 @@
     </section>
 
     <section class="section">
-        <div class="belt-container" id="asteroid-belt"></div>
-        <div style="z-index: 10; color: rgba(255,255,255,0.2); letter-spacing: 10px; font-weight: 100;">ԱՍՏԵՐՈԻԴՆԵՐԻ ԳՈՏԻ</div>
+        <div class="belt-wrapper"><div class="belt-container" id="asteroid-belt"></div></div>
+        <div class="belt-label" style="position: relative; z-index: 10; color: rgb(255, 255, 255); letter-spacing: 10px; font-weight: 100; cursor: pointer; padding: 20px; text-align: center;" onclick="showInfo('asteroid_belt')">ԱՍՏԵՐՈԻԴՆԵՐԻ ԳՈՏԻ</div>
     </section>
 
     <section class="section">
-        <div class="orbit-line"></div>
+        <div class="orbit-wrapper"><div class="orbit-line"></div></div>
         <div class="planet-container" onclick="showInfo('jupiter')">
             <div class="planet jupiter"></div>
             <div class="callout">
@@ -406,7 +554,7 @@
     </section>
 
     <section class="section">
-        <div class="orbit-line"></div>
+        <div class="orbit-wrapper"><div class="orbit-line"></div></div>
         <div class="planet-container" onclick="showInfo('saturn')">
             <div class="planet saturn"></div>
             <div class="callout">
@@ -417,7 +565,7 @@
     </section>
 
     <section class="section">
-        <div class="orbit-line"></div>
+        <div class="orbit-wrapper"><div class="orbit-line"></div></div>
         <div class="planet-container" onclick="showInfo('uranus')">
             <div class="planet uranus"></div>
             <div class="callout">
@@ -428,7 +576,7 @@
     </section>
 
     <section class="section">
-        <div class="orbit-line"></div>
+        <div class="orbit-wrapper"><div class="orbit-line"></div></div>
         <div class="planet-container" onclick="showInfo('neptune')">
             <div class="planet neptune"></div>
             <div class="callout">
@@ -439,8 +587,10 @@
     </section>
 
     <section class="section">
-        <div class="belt-container" id="kuiper-belt" style="width: 180vw; height: 180vw;"></div>
-        <div style="z-index: 10; color: rgba(255,255,255,0.2); letter-spacing: 10px; font-weight: 100;">ԿՈՅՊԵՐԻ ԳՈՏԻ</div>
+        <div class="belt-wrapper" style="width: 180vw; height: 180vw;">
+            <div class="belt-container" id="kuiper-belt"></div>
+        </div>
+        <div class="belt-label" style="position: relative; z-index: 10; color: rgb(255, 255, 255); letter-spacing: 10px; font-weight: 100; cursor: pointer; padding: 20px; text-align: center;" onclick="showInfo('kuiper_belt')">ԿՈՅՊԵՐԻ ԳՈՏԻ</div>
     </section>
 
     <footer>
@@ -450,6 +600,37 @@
     </footer>
 
     <script>
+        // УПРАВЛЕНИЕ МУЗЫКОЙ
+        const music = document.getElementById('bg-music');
+        const musicIconImg = document.getElementById('music-icon-img');
+        
+        // ZAMENI NA SVOI PUTI K KARTINKAM
+        const imgPathPlay = "/img/volume-mute_4186908-removebg-preview.png"; 
+        const imgPathMute = "/img/volume_4186904-removebg-preview.png";
+
+        let musicStarted = false;
+
+        function toggleMusic() {
+            if (music.paused) {
+                music.play();
+                musicIconImg.src = imgPathPlay;
+            } else {
+                music.pause();
+                musicIconImg.src = imgPathMute;
+            }
+            musicStarted = true;
+        }
+
+        // Попытка автовоспроизведения при первом клике на экран
+        document.body.addEventListener('click', (e) => {
+            if (!musicStarted && music.paused && !e.target.closest('#music-toggle')) {
+                music.play().then(() => {
+                    musicIconImg.src = imgPathPlay;
+                    musicStarted = true;
+                }).catch(() => {}); 
+            }
+        }, { once: true });
+
         // ГЕНЕРАЦИЯ ЗВЕЗД
         const starsContainer = document.getElementById('stars-container');
         for (let i = 0; i < 250; i++) {
@@ -484,15 +665,14 @@
                 belt.appendChild(rock);
             }
         }
-        generateBelt('asteroid-belt', 300);
-        generateBelt('kuiper-belt', 400);
+        generateBelt('asteroid-belt', 10000);
+        generateBelt('kuiper-belt', 15000);
 
         // КОМЕТЫ (ЛЕТАЮЩИЕ)
         function createComet() {
             const comet = document.createElement('div');
             comet.className = 'comet';
             
-            // Выбираем случайный край: 0-верх, 1-право, 2-низ, 3-лево
             const edge = Math.floor(Math.random() * 4);
             let startX, startY, endX, endY;
 
@@ -510,7 +690,6 @@
                 endX = 110; endY = Math.random() * 100;
             }
 
-            // Вычисляем угол, чтобы яркая часть (справа) смотрела по курсу
             const dx = endX - startX;
             const dy = endY - startY;
             const angle = Math.atan2(dy, dx) * (180 / Math.PI);
@@ -533,100 +712,48 @@
 
         setInterval(() => {
             createComet();
-            if(Math.random() > 0.5) setTimeout(createComet, 500); // Иногда 2 кометы
+            if(Math.random() > 0.5) setTimeout(createComet, 500);
         }, 12000);
 
-        // ОБНОВЛЕННЫЕ ДАННЫЕ (ВСЕ ПАРАМЕТРЫ)
+        // ОБНОВЛЕННЫЕ ДАННЫЕ
         const planetData = {
-            sun: { 
-                t: "Արեգակ", r: "1,392,700 կմ", v: "7,189 կմ/ժ", 
-                ds: "0 կմ", dz: "149.6 մլն կմ", g: "274 մ/վ²", sp: "8 մոլորակ",
-                v_axis: "7,189 կմ/ժ (25-35 երկրային օր)",
-                v_sun: "220 կմ/վ (Գալակտիկայի շուրջ)"
-            },
-            mercury: { 
-                t: "Մերկուրի", r: "4,879 կմ", v: "47.36 կմ/վ", 
-                ds: "57.9 մլն կմ", dz: "91.7 մլն կմ", g: "3.7 մ/վ²", sp: "0",
-                v_axis: "10.83 կմ/ժ (58.6 երկրային օր)",
-                v_sun: "170,500 կմ/ժ (88 երկրային օր)"
-            },
-            venus: { 
-                t: "Վեներա", r: "12,104 կմ", v: "35.02 կմ/վ", 
-                ds: "108.2 մլն կմ", dz: "41.4 մլն կմ", g: "8.87 մ/վ²", sp: "0",
-                v_axis: "6.52 կմ/ժ (243 երկրային օր)",
-                v_sun: "126,070 կմ/ժ (224.7 երկրային օր)"
-            },
-            earth: { 
-                t: "Երկիր", r: "12,742 կմ", v: "29.78 կմ/վ", 
-                ds: "149.6 մլն կմ", dz: "0 կմ", g: "9.8 մ/վ²", sp: "1",
-                v_axis: "1,674 կմ/ժ (23ժ 56ր)",
-                v_sun: "107,200 կմ/ժ (365.25 օր)"
-            },
-            moon: { 
-                t: "Լուսին", r: "3,474 կմ", v: "1.02 կմ/վ", 
-                ds: "149.6 մլն կմ", dz: "384,400 կմ", g: "1.62 մ/վ²", sp: "0",
-                v_axis: "16.7 կմ/ժ (27.3 երկրային օր)",
-                v_sun: "3,679 կմ/ժ (27.3 օր Երկրի շուրջ)"
-            },
-            mars: { 
-                t: "Մարս", r: "6,779 կմ", v: "24.07 կմ/վ", 
-                ds: "227.9 մլն կմ", dz: "78.3 մլն կմ", g: "3.71 մ/վ²", sp: "2",
-                v_axis: "868 կմ/ժ (24ժ 37ր)",
-                v_sun: "86,670 կմ/ժ (687 երկրային օր)"
-            },
-            jupiter: { 
-                t: "Յուպիտեր", r: "139,820 կմ", v: "13.07 կմ/վ", 
-                ds: "778.5 մլն կմ", dz: "628.7 մլն կմ", g: "24.79 մ/վ²", sp: "95",
-                v_axis: "45,300 կմ/ժ (9ժ 55ր)",
-                v_sun: "47,000 կմ/ժ (11.8 երկրային տարի)"
-            },
-            saturn: { 
-                t: "Սատուրն", r: "116,460 կմ", v: "9.68 կմ/վ", 
-                ds: "1.4 մլրդ կմ", dz: "1.2 մլրդ կմ", g: "10.44 մ/վ²", sp: "146",
-                v_axis: "35,500 կմ/ժ (10ժ 33ր)",
-                v_sun: "34,800 կմ/ժ (29.4 երկրային տարի)"
-            },
-            uranus: { 
-                t: "Ուրան", r: "50,724 կմ", v: "6.80 կմ/վ", 
-                ds: "2.8 մլրդ կմ", dz: "2.6 մլրդ կմ", g: "8.69 մ/վ²", sp: "27",
-                v_axis: "9,660 կմ/ժ (17ժ 14ր)",
-                v_sun: "24,500 կմ/ժ (84 երկրային տարի)"
-            },
-            neptune: { 
-                t: "Նեպտուն", r: "49,244 կմ", v: "5.43 կմ/վ", 
-                ds: "4.5 մլրդ կմ", dz: "4.3 մլրդ կմ", g: "11.15 մ/վ²", sp: "14",
-                v_axis: "9,650 կմ/ժ (16ժ 6ր)",
-                v_sun: "19,500 կմ/ժ (164.8 երկրային տարի)"
-            }
+            sun: { t: "Արեգակ", r: "1,392,700 կմ", v: "7,189 կմ/ժ", ds: "0 կմ", dz: "149.6 մլն կմ", g: "274 մ/վ²", sp: "8 մոլորակ", v_axis: "7,189 կմ/ժ (25-35 երկրային օր)", v_sun: "220 կմ/վ (Գալակտիկայի շուրջ)" },
+            mercury: { t: "Մերկուրի", r: "4,879 կմ", v: "47.36 կմ/վ", ds: "57.9 մլն կմ", dz: "91.7 մլն կմ", g: "3.7 մ/վ²", sp: "0", v_axis: "10.83 կմ/ժ (58.6 երկրային օր)", v_sun: "170,500 կմ/ժ (88 երկրային օր)" },
+            venus: { t: "Վեներա", r: "12,104 կմ", v: "35.02 կմ/վ", ds: "108.2 մլն կմ", dz: "41.4 մլն կմ", g: "8.87 մ/վ²", sp: "0", v_axis: "6.52 կմ/ժ (243 երկրային օր)", v_sun: "126,070 կմ/ժ (224.7 երկրային օր)" },
+            earth: { t: "Երկիր", r: "12,742 կմ", v: "29.78 կմ/վ", ds: "149.6 մլն կմ", dz: "0 կմ", g: "9.8 մ/վ²", sp: "1", v_axis: "1,674 կմ/ժ (23ժ 56ր)", v_sun: "107,200 կմ/ժ (365.25 օր)" },
+            moon: { t: "Լուսին", r: "3,474 կմ", v: "1.02 կմ/վ", ds: "149.6 մլն կմ", dz: "384,400 կմ", g: "1.62 մ/վ²", sp: "0", v_axis: "16.7 kմ/ժ (27.3 երկրային օր)", v_sun: "3,679 կմ/ժ (27.3 օր Երկրի շուրջ)" },
+            mars: { t: "Մարս", r: "6,779 կմ", v: "24.07 կմ/վ", ds: "227.9 մլն կմ", dz: "78.3 մլն կմ", g: "3.71 մ/վ²", sp: "2", v_axis: "868 կմ/ժ (24ժ 37ր)", v_sun: "86,670 կմ/ժ (687 երկրային օր)" },
+            jupiter: { t: "Յուպիտեր", r: "139,820 կմ", v: "13.07 կմ/վ", ds: "778.5 մլն կմ", dz: "628.7 մլն կմ", g: "24.79 մ/վ²", sp: "95", v_axis: "45,300 կմ/ժ (9ժ 55ր)", v_sun: "47,000 կմ/ժ (11.8 երկրային տարի)" },
+            saturn: { t: "Սատուրն", r: "116,460 կմ", v: "9.68 կմ/վ", ds: "1.4 մլրդ կմ", dz: "1.2 մլրդ կմ", g: "10.44 մ/վ²", sp: "146", v_axis: "35,500 կմ/ժ (10ժ 33ր)", v_sun: "34,800 կմ/ժ (29.4 երկրային տարի)" },
+            uranus: { t: "Ուրան", r: "50,724 կմ", v: "6.80 կմ/վ", ds: "2.8 մլրդ կմ", dz: "2.6 մլրդ կմ", g: "8.69 մ/վ²", sp: "27", v_axis: "9,660 կմ/ժ (17ժ 14ր)", v_sun: "24,500 կմ/ժ (84 երկրային տարի)" },
+            neptune: { t: "Նեպտուն", r: "49,244 կմ", v: "5.43 կմ/վ", ds: "4.5 մլրդ կմ", dz: "4.3 մլրդ կմ", g: "11.15 մ/վ²", sp: "14", v_axis: "9,650 կմ/ժ (16ժ 6ր)", v_sun: "19,500 կմ/ժ (164.8 երկրային տարի)" },
+            asteroid_belt: { t: "Աստերոիդների գոտի", r: "Մոտ 1 ա.մ.", v: "17.9 կմ/վ", ds: "329-478 մլն կմ", dz: "179-328 մլն կմ", g: "Աննշան", sp: "1-2 միլիոն", v_axis: "Տարբեր", v_sun: "17.9 կմ/վ (3-6 տարի)" },
+            kuiper_belt: { t: "Կոյպերի գոտի", r: "Մոտ 20 ա.մ.", v: "4.7 կմ/վ", ds: "4.5-7.5 մլրդ կմ", dz: "4.3-7.3 մլրդ կմ", g: "Աննշան", sp: ">100,000", v_axis: "Տարբեր", v_sun: "4.7 կմ/վ (200 տարի)" }
         };
 
         function showInfo(id) {
             const d = planetData[id];
             document.getElementById('info-title').textContent = d.t;
             document.getElementById('info-content').innerHTML = `
-                <div class="info-stat"><span class="stat-label">Չափս (Տրամագիծ)</span><span class="stat-value">${d.r}</span></div>
+                <div class="info-stat"><span class="stat-label">Չափս</span><span class="stat-value">${d.r}</span></div>
                 <div class="info-stat"><span class="stat-label">Պտտման արագություն</span><span class="stat-value">${d.v}</span></div>
                 <div class="info-stat"><span class="stat-label">Հեռավորություն Արեգակից</span><span class="stat-value">${d.ds}</span></div>
                 <div class="info-stat"><span class="stat-label">Հեռավորություն Երկրից</span><span class="stat-value">${d.dz}</span></div>
                 <div class="info-stat"><span class="stat-label">Ձգողականության ուժ</span><span class="stat-value">${d.g}</span></div>
                 <div class="info-stat"><span class="stat-label">Արբանյակների քանակ</span><span class="stat-value">${d.sp}</span></div>
-                <div class="info-stat"><span class="stat-label">Առանցքային պտույտ (արագություն և տևողություն)</span><span class="stat-value">${d.v_axis}</span></div>
-                <div class="info-stat"><span class="stat-label">Ուղեծրային պտույտ (արագություն և տևողություն)</span><span class="stat-value">${d.v_sun}</span></div>
+                <div class="info-stat"><span class="stat-label">Առանցքային պտույտ</span><span class="stat-value">${d.v_axis}</span></div>
+                <div class="info-stat"><span class="stat-label">Ուղեծրային պտույտ</span><span class="stat-value">${d.v_sun}</span></div>
             `;
             document.getElementById('info-panel').classList.add('active');
         }
 
         const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    document.getElementById('info-panel').classList.remove('active');
-                }
-            });
+            entries.forEach(entry => { if (entry.isIntersecting) document.getElementById('info-panel').classList.remove('active'); });
         }, { threshold: 0.1 });
         document.querySelectorAll('.section').forEach(s => observer.observe(s));
 
         document.addEventListener('click', (e) => {
-            if (!e.target.closest('.planet-container') && !e.target.closest('#info-panel') && !e.target.closest('.moon')) {
+            if (!e.target.closest('.planet-container') && !e.target.closest('#info-panel') && !e.target.closest('.moon') && !e.target.closest('.belt-label')) {
                 document.getElementById('info-panel').classList.remove('active');
             }
         });
