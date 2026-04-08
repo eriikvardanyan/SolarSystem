@@ -286,15 +286,15 @@
         
         /* .planet:hover { transform: scale(1.05); } */
 
-        .sun { width: 300px; height: 300px; background-image: url('/img/sun1.png'); }
-        .mercury { width: 45px; height: 45px; background-image: url('/img/mercury1.png'); }
-        .venus { width: 75px; height: 75px; background-image: url('/img/venus1.png'); }
-        .earth { width: 90px; height: 90px; background-image: url('/img/earth1.png'); }
-        .mars { width: 60px; height: 60px; background-image: url('/img/mars1.png'); }
-        .jupiter { width: 200px; height: 200px; background-image: url('/img/jupiter1.png'); }
-        .saturn { width: 240px; height: 160px; background-image: url('/img/saturn1.png'); border-radius: 0; }
-        .uranus { width: 120px; height: 500px; background-image: url('/img/uranus1.png'); }
-        .neptune { width: 105px; height: 105px; background-image: url('/img/neptune1.png'); }
+        .sun { width: 300px; height: 300px; background-image: url('img/sun1.png'); }
+        .mercury { width: 45px; height: 45px; background-image: url('img/mercury1.png'); }
+        .venus { width: 75px; height: 75px; background-image: url('img/venus1.png'); }
+        .earth { width: 90px; height: 90px; background-image: url('img/earth1.png'); }
+        .mars { width: 60px; height: 60px; background-image: url('img/mars1.png'); }
+        .jupiter { width: 200px; height: 200px; background-image: url('img/jupiter1.png'); }
+        .saturn { width: 240px; height: 160px; background-image: url('img/saturn1.png'); border-radius: 0; }
+        .uranus { width: 120px; height: 500px; background-image: url('img/uranus1.png'); }
+        .neptune { width: 105px; height: 105px; background-image: url('img/neptune1.png'); }
 
         /* СИСТЕМА ЛУНЫ */
         .moon-system {
@@ -316,7 +316,7 @@
         .moon {
             width: 20px;
             height: 20px;
-            background-image: url('/img/moon1.png');
+            background-image: url('img/moon1.png');
             background-size: contain;
             background-repeat: no-repeat;
             background-position: center;
@@ -444,18 +444,18 @@
 <body>
 
     <audio id="bg-music" loop preload="auto">
-        <source src="/img/2 Minute Timer - Calm Ambient Music - Underwater Melon (128k).mp3" type="audio/mpeg">
+        <source src="img/2 Minute Timer - Calm Ambient Music - Underwater Melon (128k).mp3" type="audio/mpeg">
     </audio>
     <script>document.getElementById('bg-music').volume = 0.05;</script>
 
     <div id="music-toggle" class="ios-panel" onclick="toggleMusic()">
-        <img id="music-icon-img" src="/img/volume_4186904-removebg-preview.png" alt="Music Toggle">
+        <img id="music-icon-img" src="img/volume_4186904-removebg-preview.png" alt="Music Toggle">
     </div>
 
     <div id="stars-container"></div>
 
     <div id="info-panel" class="ios-panel">
-        <div id="info-title">Անվանում</div>
+        <div id="info-title"></div>
         <div id="info-content"></div>
     </div>
 
@@ -605,8 +605,8 @@
         const musicIconImg = document.getElementById('music-icon-img');
         
         // ZAMENI NA SVOI PUTI K KARTINKAM
-        const imgPathPlay = "/img/volume-mute_4186908-removebg-preview.png"; 
-        const imgPathMute = "/img/volume_4186904-removebg-preview.png";
+        const imgPathPlay = "img/volume-mute_4186908-removebg-preview.png"; 
+        const imgPathMute = "img/volume_4186904-removebg-preview.png";
 
         let musicStarted = false;
 
