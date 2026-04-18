@@ -295,7 +295,7 @@
         }
 
         .planet {
-            border-radius: 50%;
+            /* border-radius: 50%; */
             position: relative;
             background-size: contain;
             background-repeat: no-repeat;
@@ -452,7 +452,7 @@
                 height: 45px;
             }
 
-            .sun { width: 200px; height: 200px; }
+            .sun { width: 200px; height: 200px; border-radius: 0;}
             .jupiter { width: 140px; height: 140px; }
             .saturn { width: 170px; height: 110px; }
 
@@ -736,15 +736,13 @@
         }, 12000);
 
         function createFlyingEmoji() {
-            const emojis = ['🚀', '🛸'];
+            const emojis = ['🛸', '🚀'];
             const emoji = document.createElement('div');
             emoji.className = 'flying-emoji';
             
-            // Viberayem smailik
             const selectedEmoji = emojis[Math.floor(Math.random() * emojis.length)];
             emoji.textContent = selectedEmoji;
 
-            // Zdes nastroika tsveta: dlya tarelki - zeleniy, dlya raketi - beliy
             if (selectedEmoji === '🛸') {
                 emoji.style.filter = 'drop-shadow(0 0 10px rgba(0, 255, 0, 0.8))';
             } else {
@@ -782,12 +780,17 @@
             
             document.body.appendChild(emoji);
 
-            const duration = 4000 + Math.random() * 2000;
+            const duration = 7000 + Math.random() * 4000;
 
             emoji.animate([
-                { left: startX + 'vw', top: startY + 'vh' },
-                { left: endX + 'vw', top: endY + 'vh' }
-            ], { duration: duration, easing: 'linear' });
+                { left: startX + 'vw', top: startY + 'vh', opacity: 0 },
+                { opacity: 1, offset: 0.2 }, 
+                { opacity: 1, offset: 0.8 }, 
+                { left: endX + 'vw', top: endY + 'vh', opacity: 0 } 
+            ], { 
+                duration: duration, 
+                easing: 'ease-in-out' 
+            });
 
             setTimeout(() => emoji.remove(), duration + 100);
         }
