@@ -6,9 +6,11 @@
     <title>Արեգակնային Համակարգ</title>
     <link rel="icon" href="img/icon.png" type="image/png">
     <style>
-        /* =========================================
-           БАЗОВЫЕ НАСТРОЙКИ И ФОН
-        ========================================= */
+        html {
+            overflow-x: hidden;
+            max-width: 100vw;
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -21,6 +23,7 @@
             color: #ffffff;
             overflow-x: hidden;
             scroll-behavior: smooth;
+            max-width: 100vw;
         }
 
         #stars-container {
@@ -56,9 +59,16 @@
             transform-origin: center right;
         }
 
-        /* =========================================
-           СТИЛЬ iOS 26 (ИНФО-ПАНЕЛЬ И ИНТРО И МУЗЫКА)
-        ========================================= */
+        /* ЛЕТАЮЩИЕ ЭМОДЗИ */
+        .flying-emoji {
+            position: fixed;
+            font-size: 20px;
+            z-index: 100;
+            pointer-events: none;
+            user-select: none;
+            /* Filter udalyon ottuda, teper on v JS */
+        }
+
         .ios-panel {
             background: rgba(10, 10, 10, 0.7);
             border: 0.5px solid rgba(255, 255, 255, 0.2);
@@ -109,21 +119,20 @@
         .stat-label { color: rgba(255, 255, 255, 0.5); margin-bottom: 2px; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; }
         .stat-value { color: #fff; font-weight: 500; font-size: 14px; }
 
-        /* КНОПКА МУЗЫКИ */
         #music-toggle {
             position: fixed;
             top: 20px;
             left: 20px;
             width: 50px;
             height: 50px;
-            border-radius: 50%;
+            border-radius: 14px;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
             z-index: 2000;
             user-select: none;
-            overflow: hidden; /* Chtoby kartinka ne vykhodila za krug */
+            overflow: hidden; 
         }
 
         #music-icon-img {
@@ -133,9 +142,23 @@
             pointer-events: none;
         }
 
-        /* =========================================
-           СЕКЦИИ И ОБЪЕКТЫ
-        ========================================= */
+        #scroll-to-top {
+            position: fixed;
+            top: 80px;
+            left: 20px;
+            width: 50px;
+            height: 50px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 2000;
+            user-select: none;
+            transition: opacity 0.3s ease;
+            color: #987d48;
+        }
+
         .section {
             min-height: 250vh;
             display: flex;
@@ -163,7 +186,6 @@
             color: rgba(255,255,255,0.4);
         }
 
-        /* АНИМАЦИЯ СКРОЛЛА */
         .scroll-indicator {
             margin: 40px auto 20px auto;
             display: flex;
@@ -212,7 +234,6 @@
             100% { opacity: 0; }
         }
 
-        /* Орбиты и Пояса - Обёртки для статичной обрезки */
         .orbit-wrapper, .belt-wrapper {
             position: absolute;
             border-radius: 50%;
@@ -221,7 +242,7 @@
             transform: translateX(-50%);
             pointer-events: none;
             z-index: 0;
-            clip-path: inset(50% 0 0 0); /* Маска стоит на месте */
+            clip-path: inset(50% 0 0 0); 
         }
 
         .orbit-wrapper {
@@ -234,7 +255,6 @@
             height: 160vw;
         }
 
-        /* Внутренние элементы, которые крутятся */
         @keyframes rotateInner {
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
@@ -265,7 +285,6 @@
             pointer-events: none;
         }
 
-        /* ПЛАНЕТЫ */
         .planet-container {
             position: relative;
             display: flex;
@@ -283,10 +302,8 @@
             background-position: center;
             transition: transform 0.3s ease;
         }
-        
-        /* .planet:hover { transform: scale(1.05); } */
 
-        .sun { width: 300px; height: 300px; background-image: url('img/sun1.png'); }
+        .sun { width: 600px; height: 300px; background-image: url('img/sun1.png'); }
         .mercury { width: 45px; height: 45px; background-image: url('img/mercury1.png'); }
         .venus { width: 75px; height: 75px; background-image: url('img/venus1.png'); }
         .earth { width: 90px; height: 90px; background-image: url('img/earth1.png'); }
@@ -296,7 +313,6 @@
         .uranus { width: 120px; height: 500px; background-image: url('img/uranus1.png'); }
         .neptune { width: 105px; height: 105px; background-image: url('img/neptune1.png'); }
 
-        /* СИСТЕМА ЛУНЫ */
         .moon-system {
             position: absolute;
             width: 180px; 
@@ -331,11 +347,10 @@
             box-shadow: 0 0 10px rgba(255,255,255,0.2);
         }
 
-        /* ВЫНОСКИ */
         .callout {
             position: absolute;
-            right: 50%; /* Центр планеты */
-            bottom: 50%; /* Центр планеты */
+            right: 50%; 
+            bottom: 50%; 
             pointer-events: none;
             z-index: 6;
         }
@@ -343,29 +358,29 @@
         .line-diag {
             position: absolute;
             width: 100px;
-            height: 1px; /* Очень-очень тонкая линия */
+            height: 1px; 
             background-color: rgba(255, 255, 255, 0.7);
             right: 0;
             bottom: 0;
-            transform: rotate(45deg); /* Теперь идет ВВЕРХ-ВЛЕВО */
+            transform: rotate(45deg);
             transform-origin: right center;
         }
 
         .line-horiz {
             position: absolute;
             width: 150px;
-            height: 1px; /* Очень-очень тонкая линия */
+            height: 1px; 
             background-color: rgba(255, 255, 255, 0.7);
-            right: 70px; /* Сдвиг для стыковки с диагональю (cos(45) * 100) */
-            bottom: 70px; /* Сдвиг ВВЕРХ для стыковки (sin(45) * 100) */
+            right: 70px; 
+            bottom: 70px; 
         }
 
         .label-box {
             position: absolute;
             right: 70px;
-            bottom: 75px; /* Чуть выше горизонтальной линии */
+            bottom: 75px; 
             text-align: right;
-            width: 200px; /* Чтобы текст не переносился криво */
+            width: 200px; 
         }
 
         .label {
@@ -381,7 +396,6 @@
             white-space: nowrap;
         }
 
-        /* FOOTER */
         footer {
             padding: 60px 0;
             text-align: center;
@@ -401,9 +415,6 @@
             color: #987d48;
         }
 
-        /* =========================================
-           МОБИЛЬНАЯ АДАПТАЦИЯ
-        ========================================= */
         @media (max-width: 750px) {
             #info-panel { 
                 width: 100%; 
@@ -411,12 +422,12 @@
                 left: 0; 
                 top: auto; 
                 bottom: 0; 
-                max-height: 85vh; /* Оставляет 15vh сверху для закрытия нажатием */
+                max-height: 85vh; 
                 border-radius: 24px 24px 0 0;
                 border: none;
                 border-top: 0.5px solid rgba(255, 255, 255, 0.2);
                 transform: translateY(100%);
-                opacity: 1; /* Непрозрачность всегда 1, чтобы анимация выезда была плавной */
+                opacity: 1; 
                 transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
             }
             
@@ -434,7 +445,13 @@
                 height: 45px;
             }
 
-            /* Легкое уменьшение планет для мобилок, чтобы все смотрелось адекватно */
+            #scroll-to-top {
+                top: 70px;
+                left: 15px;
+                width: 45px;
+                height: 45px;
+            }
+
             .sun { width: 200px; height: 200px; }
             .jupiter { width: 140px; height: 140px; }
             .saturn { width: 170px; height: 110px; }
@@ -450,6 +467,10 @@
 
     <div id="music-toggle" class="ios-panel" onclick="toggleMusic()">
         <img id="music-icon-img" src="img/volume_4186904-removebg-preview.png" alt="Music Toggle">
+    </div>
+
+    <div id="scroll-to-top" class="ios-panel" onclick="scrollToTop()">
+        <span style="font-size: 24px; color: #987d48; pointer-events: none;">↑</span>
     </div>
 
     <div id="stars-container"></div>
@@ -600,11 +621,10 @@
     </footer>
 
     <script>
-        // УПРАВЛЕНИЕ МУЗЫКОЙ
+
         const music = document.getElementById('bg-music');
         const musicIconImg = document.getElementById('music-icon-img');
         
-        // ZAMENI NA SVOI PUTI K KARTINKAM
         const imgPathPlay = "img/volume-mute_4186908-removebg-preview.png"; 
         const imgPathMute = "img/volume_4186904-removebg-preview.png";
 
@@ -621,17 +641,13 @@
             musicStarted = true;
         }
 
-        // Попытка автовоспроизведения при первом клике на экран
-        document.body.addEventListener('click', (e) => {
-            if (!musicStarted && music.paused && !e.target.closest('#music-toggle')) {
-                music.play().then(() => {
-                    musicIconImg.src = imgPathPlay;
-                    musicStarted = true;
-                }).catch(() => {}); 
-            }
-        }, { once: true });
+        function scrollToTop() {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        }
 
-        // ГЕНЕРАЦИЯ ЗВЕЗД
         const starsContainer = document.getElementById('stars-container');
         for (let i = 0; i < 250; i++) {
             const star = document.createElement('div');
@@ -645,7 +661,6 @@
             starsContainer.appendChild(star);
         }
 
-        // ГЕНЕРАЦИЯ ПОЯСОВ (КАМНИ)
         function generateBelt(id, count) {
             const belt = document.getElementById(id);
             const width = belt.offsetWidth;
@@ -668,7 +683,6 @@
         generateBelt('asteroid-belt', 10000);
         generateBelt('kuiper-belt', 15000);
 
-        // КОМЕТЫ (ЛЕТАЮЩИЕ)
         function createComet() {
             const comet = document.createElement('div');
             comet.className = 'comet';
@@ -715,7 +729,65 @@
             if(Math.random() > 0.5) setTimeout(createComet, 500);
         }, 12000);
 
-        // ОБНОВЛЕННЫЕ ДАННЫЕ
+        function createFlyingEmoji() {
+            const emojis = ['🚀', '🛸'];
+            const emoji = document.createElement('div');
+            emoji.className = 'flying-emoji';
+            
+            // Viberayem smailik
+            const selectedEmoji = emojis[Math.floor(Math.random() * emojis.length)];
+            emoji.textContent = selectedEmoji;
+
+            // Zdes nastroika tsveta: dlya tarelki - zeleniy, dlya raketi - beliy
+            if (selectedEmoji === '🛸') {
+                emoji.style.filter = 'drop-shadow(0 0 10px rgba(0, 255, 0, 0.8))';
+            } else {
+                emoji.style.filter = 'drop-shadow(0 0 10px rgba(255, 255, 255, 0.8))';
+            }
+            
+            const edge = Math.floor(Math.random() * 4);
+            let startX, startY, endX, endY;
+
+            if (edge === 0) {
+                startX = Math.random() * 100; startY = -10;
+                endX = Math.random() * 100; endY = 110;
+            } else if (edge === 1) {
+                startX = 110; startY = Math.random() * 100;
+                endX = -10; endY = Math.random() * 100;
+            } else if (edge === 2) {
+                startX = Math.random() * 100; startY = 110;
+                endX = Math.random() * 100; endY = -10;
+            } else {
+                startX = -10; startY = Math.random() * 100;
+                endX = 110; endY = Math.random() * 100;
+            }
+
+            const dx = endX - startX;
+            const dy = endY - startY;
+            let angle = Math.atan2(dy, dx) * (180 / Math.PI);
+
+            if (emoji.textContent === '🚀') {
+                angle += 45; 
+            }
+
+            emoji.style.top = startY + 'vh';
+            emoji.style.left = startX + 'vw';
+            emoji.style.transform = `rotate(${angle}deg)`;
+            
+            document.body.appendChild(emoji);
+
+            const duration = 4000 + Math.random() * 2000;
+
+            emoji.animate([
+                { left: startX + 'vw', top: startY + 'vh' },
+                { left: endX + 'vw', top: endY + 'vh' }
+            ], { duration: duration, easing: 'linear' });
+
+            setTimeout(() => emoji.remove(), duration + 100);
+        }
+
+        setInterval(createFlyingEmoji, 15000);
+
         const planetData = {
             sun: { t: "Արեգակ", r: "1,392,700 կմ", v: "7,189 կմ/ժ", ds: "0 կմ", dz: "149.6 մլն կմ", g: "274 մ/վ²", sp: "8 մոլորակ", v_axis: "7,189 կմ/ժ (25-35 երկրային օր)", v_sun: "220 կմ/վ (Գալակտիկայի շուրջ)" },
             mercury: { t: "Մերկուրի", r: "4,879 կմ", v: "47.36 կմ/վ", ds: "57.9 մլն կմ", dz: "91.7 մլն կմ", g: "3.7 մ/վ²", sp: "0", v_axis: "10.83 կմ/ժ (58.6 երկրային օր)", v_sun: "170,500 կմ/ժ (88 երկրային օր)" },
